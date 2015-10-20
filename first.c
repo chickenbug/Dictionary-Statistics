@@ -1,7 +1,6 @@
 #include "first.h"
 
 Node* head;
-node_initialize(head, '.');
 
 /*node and trie functions */
 void node_initialize(Node* n, char letter){
@@ -105,20 +104,21 @@ void matchStr(char* str){
 	for (p = str; *p; ++p) *p = tolower(*p);
 	if(vertex == NULL  || str == NULL || *str =='\0') return;
 
-	while(*word_point != '\0'){
-		index = char_index(*word_point);
+	while(*str != '\0'){
+		index = char_index(*str);
 		if(vertex->is_word) vertex->super_num++;
 
-		if(!(vertex->next[index])) return 0;
+		if(!(vertex->next[index])) return;
 		else (vertex = vertex->next[index]);
-		word_point++;
+		str++;
 	}
 	if(vertex->is_word) vertex->exact_num++;
 	return;
 }
 
 void readData(FILE *data_file){
-	char *string_block, *begin, *end;
+	char string_block[400];
+	char *begin, *end;
 	while(fscanf(data_file,"%s", string_block) != EOF){
 		/*after the last word is returned the begin index will be placed at the end '\0'*/
 		begin = end = string_block;
@@ -127,9 +127,9 @@ void readData(FILE *data_file){
 				end++;
 			}
 			char word_to_check[begin - end + 2];
-			word_to_check[begin - end + 1] ='\0'
+			word_to_check[begin - end + 1] ='\0';
 			strncpy(word_to_check, begin, begin-end);
-			matchStr(word_to_check)
+			matchStr(word_to_check);
 			begin = end; 
 		}
 	}
@@ -137,7 +137,8 @@ void readData(FILE *data_file){
 }
 
 void readDict(FILE *dict_file){
-	char *string_block, *begin, *end;
+	char string_block[400];
+	char *begin, *end;
 	while(fscanf(dict_file,"%s", string_block) != EOF){
 		/*after the last word is returned the begin index will be placed at the end '\0'*/
 		begin = end = string_block;
@@ -146,9 +147,9 @@ void readDict(FILE *dict_file){
 				end++;
 			}
 			char word_to_insert[begin - end + 2];
-			word_to_insert[begin - end + 1] ='\0'
+			word_to_insert[begin - end + 1] ='\0';
 			strncpy(word_to_insert, begin, begin-end);
-			add_word(word_to_insert) 
+			add_word(word_to_insert);
 			begin = end; 
 		}
 	}
@@ -158,9 +159,9 @@ void readDict(FILE *dict_file){
 /*Produces the output files of the program*/
 void printResult(){
 	static int line = 0;
-	line++
-	char* file_name;
-	file_name = sprintf(file_name,"out%d.txt", line)
+	line++;
+	char file_name[20];
+	sprintf(file_name,"out%d.txt", line);
 
 	FILE *f = fopen(file_name, "w");
 	if (f == NULL){
@@ -181,11 +182,13 @@ void print_file(Node* vertex, FILE *f){
 }
 
 
-int mains(int argc, int argv){
+int mains(int argc, char** argv){
 	FILE *input, *dict_file, *data_file;
-	char *dict_name, *data_name;
+	char dict_name[50], data_name[50];
 	int i;
-	int map_line = 1;
+	
+	head = malloc(sizeof(Node));
+	node_initialize(head, '.');
 
 	input = fopen(argv[1], "r");
 	if(input == NULL){
@@ -213,6 +216,9 @@ int mains(int argc, int argv){
 }
 
 int main(){
+	head = malloc(sizeof(Node));
+	node_initialize(head, '.');
+
 	int i;
 	add_word("apple");
 	add_word("axe");
@@ -220,9 +226,9 @@ int main(){
 	if(search_word("bacon")) printf("exists\n");
 	if(search_word("karma")) printf("exists\n");
 
-	print_trie();
+	print_trie(head);
 	for(i=0; i<26; i++) free_trie(head->next[i]);
 	reset_head();
 
-	return 0
+	return 0;
 }
