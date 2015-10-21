@@ -1,4 +1,5 @@
 #include "first.h"
+//TODO Make sure all strings given are fucking lowercase
 
 Node* head;
 
@@ -22,13 +23,12 @@ void reset_head(){
 	for(i = 0; i<26; i++) head->next[i] = NULL;
 }
 
-/*searches for an occourence of the word in the trie*/
+/*searches for an occourence of the word in the trie
+  Must be given a lowercase string*/
 int search_word(char* word_point){
 	int index;
-	char* p;
 	Node* vertex = head;
 
-	for (p = word_point ; *p; ++p) *p = tolower(*p);
 	if(vertex == NULL  || word_point == NULL || *word_point =='\0') return 0;
 
 	while(*word_point != '\0'){
@@ -41,14 +41,13 @@ int search_word(char* word_point){
 	return 0;
 }
 
-/*adds a word to the trie if it does not already exist*/
+/*adds a word to the trie if it does not already exist
+  Must be given a lowercase string*/
 int add_word(char* word){
 	int index;
 	Node* vertex = head;
-	char *p, *word_point;
-	word_point = word;
+	char *word_point = word;
 
-	for (p = word ; *p; ++p) *p = tolower(*p);
 	if(vertex == NULL  || word_point == NULL) return 0;
 	if(search_word(word_point)) return 0; // words  already in the trie must not be added
 
@@ -82,7 +81,7 @@ void print_trie(Node* vertex){
 	int i;
 	if(!vertex) return;
 	for(i = 0; i<26; i++) print_trie(vertex->next[i]);
-	printf("word: %s exact matches %d super matches %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+	if(vertex->is_word) printf("word: %s exact matches %d super matches %d\n",vertex->word, vertex->exact_num, vertex->super_num);
 	return;
 }
 
@@ -94,14 +93,13 @@ void free_trie(Node* vertex){
 	return;
 }
 
-/*end of node and trie functions*/
+/*end of node and trie functions
+  Must be given a lowercase string*/
 
 void matchStr(char* str){
 	int index;
-	char* p;
 	Node* vertex = head;
 
-	for (p = str; *p; ++p) *p = tolower(*p);
 	if(vertex == NULL  || str == NULL || *str =='\0') return;
 
 	while(*str != '\0'){
@@ -117,7 +115,7 @@ void matchStr(char* str){
 }
 
 void readData(FILE *data_file){
-	char string_block[400];
+	char string_block[500];
 	char *begin, *end;
 	while(fscanf(data_file,"%s", string_block) != EOF){
 		/*after the last word is returned the begin index will be placed at the end '\0'*/
@@ -137,7 +135,7 @@ void readData(FILE *data_file){
 }
 
 void readDict(FILE *dict_file){
-	char string_block[400];
+	char string_block[500];
 	char *begin, *end;
 	while(fscanf(dict_file,"%s", string_block) != EOF){
 		/*after the last word is returned the begin index will be placed at the end '\0'*/
@@ -160,7 +158,7 @@ void readDict(FILE *dict_file){
 void printResult(){
 	static int line = 0;
 	line++;
-	char file_name[20];
+	char file_name[50];
 	sprintf(file_name,"out%d.txt", line);
 
 	FILE *f = fopen(file_name, "w");
@@ -177,18 +175,17 @@ void print_file(Node* vertex, FILE *f){
 	int i;
 	if(!vertex) return;
 	for(i = 0; i<26; i++) print_trie(vertex->next[i]);
-	fprintf(f,"%s  %d  %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+	if (vertex->is_word
+		) fprintf(f,"%s  %d  %d\n",vertex->word, vertex->exact_num, vertex->super_num);
 	return;
 }
 
 
 int mains(int argc, char** argv){
 	FILE *input, *dict_file, *data_file;
-	char dict_name[50], data_name[50];
+	char dict_name[500];
+	char data_name[500];
 	int i;
-	
-	head = malloc(sizeof(Node));
-	node_initialize(head, '.');
 
 	input = fopen(argv[1], "r");
 	if(input == NULL){
@@ -220,11 +217,13 @@ int main(){
 	node_initialize(head, '.');
 
 	int i;
+	add_word("bacon");
 	add_word("apple");
 	add_word("axe");
-	add_word("bacon");
-	if(search_word("bacon")) printf("exists\n");
-	if(search_word("karma")) printf("exists\n");
+
+	matchStr("axe");
+	matchStr("axel");
+	matchStr("axe");
 
 	print_trie(head);
 	for(i=0; i<26; i++) free_trie(head->next[i]);
