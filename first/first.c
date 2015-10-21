@@ -1,8 +1,10 @@
 #include "first.h"
-//TODO seperate Trie code from 
+
 Node* head;
 
 /*node and trie functions */
+
+//initializes a created node to default values, and a letter to avoid garbage data
 void node_initialize(Node* n, char letter){
 	int i;
 	n->character = letter;
@@ -12,18 +14,13 @@ void node_initialize(Node* n, char letter){
 	for(i = 0; i<26; i++) n->next[i] = NULL;
 }
 
+//Takes a letter, and returns the appropriate index value for a node's children array
 int char_index(char a){
 	int i = a - 97;
 	return i;
 }
 
-void reset_head(){
-	int i;
-	for(i = 0; i<26; i++) head->next[i] = NULL;
-}
-
-/*searches for an occourence of the word in the trie
-  Must be given a lowercase string*/
+/*searches for an occourence of the word in the trie. Returns 1 if found*/
 int search_word(char* word_point){
 	int index;
 	Node* vertex = head;
@@ -40,8 +37,7 @@ int search_word(char* word_point){
 	return 0;
 }
 
-/*adds a word to the trie if it does not already exist
-  Must be given a lowercase string*/
+/*adds a word to the trie if it does not already exist*/
 int add_word(char* word){
 	int index;
 	Node* vertex = head;
@@ -61,10 +57,10 @@ int add_word(char* word){
 				vertex = vertex->next[index];
 				word_point++;
 			}
-				vertex->is_word = 1;
-				vertex->word = malloc(sizeof(word));
-				strcpy(vertex->word, word);
-				return 1;
+			vertex->is_word = 1;
+			vertex->word = malloc(strlen(word)+1);
+			strcpy(vertex->word, word);
+			return 1;
 		}
 		else{
 			vertex = vertex->next[index];
@@ -73,12 +69,12 @@ int add_word(char* word){
 		
 	}
 	vertex->is_word = 1;
-	vertex->word = malloc(sizeof(word));
+	vertex->word =  malloc(strlen(word)+1);
 	strcpy(vertex->word, word);
 	return 1;
 }
 
-// prints the tree and data alphabetically 
+// prints the tree and data alphabetically for debug
 void print_trie(Node* vertex){
 	int i;
 	if(!vertex) return;
@@ -90,6 +86,7 @@ void print_trie(Node* vertex){
 	return;
 }
 
+//free's a vertex and it's children recursively 
 void free_trie(Node* vertex){
 	int i;
 	if(!vertex) return;
@@ -99,7 +96,9 @@ void free_trie(Node* vertex){
 	return;
 }
 
+/*end of node and trie functions*/
 
+/*Reads through the data file for valid words, and updates word statistics using matchStr()*/
 void matchStr(char* str){
 	int index;
 	Node* vertex = head;
@@ -117,9 +116,7 @@ void matchStr(char* str){
 	return;
 }
 
-
-/*end of node and trie functions*/
-
+/*Reads through the data file for valid words, and updates word statistics using matchStr()*/
 void readData(FILE *data_file){
 	char string_block[1024]; // Max buffersize 1 kilobyte
 	char *begin, *end, *p;
@@ -145,6 +142,7 @@ void readData(FILE *data_file){
 	return;
 }
 
+/*Reads through the dict_file for valid words, and inserts them into the trie using add_word()*/
 void readDict(FILE *dict_file){
 	char string_block[1024]; // Max buffersize 1 kilobyte
 	char *begin, *end, *p;
@@ -172,7 +170,8 @@ void readDict(FILE *dict_file){
 	return;
 }
 
-/*Produces the output files of the program*/
+/*Creates the output of the program. 
+Makes a file and prints the line statistics to it using the recursive print funciton print_f*/
 void printResult(){
 	static int line = 0;
 	line++;
@@ -189,23 +188,21 @@ void printResult(){
 	return;
 }
 
+/*Takes in a files stream object and a starting vertex.
+Uses recursive tree traversal to alphabetically print the statistics of the three alphabetically*/
 void print_file(Node* vertex, FILE *f){
 	int i;
 	if(!vertex) return;
-	if (vertex->is_word) fprintf(f,"%s  %d  %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+	if (vertex->is_word) fprintf(f,"%s %d %d\n",vertex->word, vertex->exact_num, vertex->super_num);
 	for(i = 0; i<26; i++) print_file(vertex->next[i], f);
 	return;
 }
 
-
+/*Program main: Orchestrates the file, read, and print operations to create the necessary statistics*/ 
 int main(int argc, char** argv){
 	FILE *input, *dict_file, *data_file;
 	char dict_name[100];
 	char data_name[100];
-	int i;
-
-	head = malloc(sizeof(Node));
-	node_initialize(head, '.');
 
 	input = fopen(argv[1], "r");
 	if(input == NULL){
@@ -214,6 +211,9 @@ int main(int argc, char** argv){
 	} 
 
 	while(fscanf(input, "%s %s\n", dict_name, data_name) != EOF){
+		head = malloc(sizeof(Node));
+		node_initialize(head, '.');
+
 		dict_file = fopen(dict_name, "r");
 		data_file = fopen(data_name, "r");
 
@@ -222,13 +222,11 @@ int main(int argc, char** argv){
 			return 0;
 		} 
 		readDict(dict_file);
-
 		readData(data_file);
 		printResult();
 
-		//free's head's children recursively and reset head
-		for(i=0; i<26; i++) free_trie(head->next[i]);
-		reset_head();
+		free_trie(head);
+		head = NULL;
 	}
 	free (head);
 	return 0;
