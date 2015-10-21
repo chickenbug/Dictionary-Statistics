@@ -86,7 +86,7 @@ void print_trie(Node* vertex){
 	if(!vertex) return;
 	printf("%c ", vertex->character);
 	if(vertex->is_word){
-		 printf("\n word: %s exact matches %d super matches %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+		 printf("\n word: %s exact matches %d super matches %d\n",vertex->word, vertex->exact_num, vertex->prefix_num);
 	}		
 	for(i = 0; i<26; i++) print_trie(vertex->next[i]);	
 	return;
@@ -112,8 +112,6 @@ void matchStr(char* str){
 
 	while(*str != '\0'){
 		index = char_index(*str);
-		if(vertex->is_word) vertex->super_num++;
-
 		if(!(vertex->next[index])) return;
 		else (vertex = vertex->next[index]);
 		str++;
@@ -209,7 +207,7 @@ Uses recursive tree traversal to alphabetically print the statistics of the thre
 void print_file(Node* vertex, FILE *f){
 	int i;
 	if(!vertex) return;
-	if (vertex->is_word) fprintf(f,"%s %d %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+	if (vertex->is_word) fprintf(f,"%s %d %d\n",vertex->word, vertex->exact_num, vertex->prefix_num);
 	for(i = 0; i<26; i++) print_file(vertex->next[i], f);
 	return;
 }
