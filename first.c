@@ -47,7 +47,7 @@ int add_word(char* word){
 	Node* vertex = head;
 	char *word_point = word;
 
-	if(vertex == NULL  || word_point == NULL) return 0;
+	if(vertex == NULL  || *word_point == '\0') return 0;
 	if(search_word(word_point)) return 0; // words  already in the trie must not be added
 
 	while(*word_point != '\0'){
@@ -61,9 +61,10 @@ int add_word(char* word){
 				vertex = vertex->next[index];
 				word_point++;
 			}
-			vertex->is_word = 1;
-			vertex->word = word;
-			return 1;
+				vertex->is_word = 1;
+				vertex->word = malloc(sizeof(word));
+				strcpy(vertex->word, word);
+				return 1;
 		}
 		else{
 			vertex = vertex->next[index];
@@ -71,16 +72,21 @@ int add_word(char* word){
 		}
 		
 	}
-	printf("Code should not reach here\n");
-	return 0;
+	vertex->is_word = 1;
+	vertex->word = malloc(sizeof(word));
+	strcpy(vertex->word, word);
+	return 1;
 }
 
 // prints the tree and data alphabetically 
 void print_trie(Node* vertex){
 	int i;
 	if(!vertex) return;
-	for(i = 0; i<26; i++) print_trie(vertex->next[i]);
-	if(vertex->is_word) printf("word: %s exact matches %d super matches %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+	printf("%c ", vertex->character);
+	if(vertex->is_word){
+		 printf("\n word: %s exact matches %d super matches %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+	}		
+	for(i = 0; i<26; i++) print_trie(vertex->next[i]);	
 	return;
 }
 
@@ -88,6 +94,7 @@ void free_trie(Node* vertex){
 	int i;
 	if(!vertex) return;
 	for(i = 0; i<26; i++) free_trie(vertex->next[i]);
+	free(vertex->word);
 	free(vertex);
 	return;
 }
@@ -118,17 +125,21 @@ void readData(FILE *data_file){
 	char *begin, *end, *p;
 	while(fscanf(data_file,"%s", string_block) != EOF){
 		/*after the last word is returned the begin index will be placed at the end '\0'*/
-		begin = end = string_block;
+		begin = string_block;
 		while(*begin != '\0'){
+			while(!isalpha(*begin) && *begin != '\0') begin++;
+			if(*begin == '\0') break;
+			end = begin;
+
 			while(isalpha(*(end+1))){
 				end++;
 			}
-			char word_to_check[begin - end + 2];
-			word_to_check[begin - end + 1] ='\0';
+			char word_to_check[end - begin + 2];
+			word_to_check[end - begin + 1] ='\0';
+			strncpy(word_to_check, begin, end - begin + 1 );
 			for(p = word_to_check; *p; p++) *p = tolower(*p);
-			strncpy(word_to_check, begin, begin-end);
 			matchStr(word_to_check);
-			begin = end; 
+			begin = ++end; 
 		}
 	}
 	return;
@@ -143,18 +154,19 @@ void readDict(FILE *dict_file){
 
 		while(*begin != '\0'){
 			while(!isalpha(*begin) && *begin != '\0') begin++;
+			if(*begin == '\0') break;
 			end = begin;
+
 			while(isalpha(*(end+1)) && *end != '\0'){
 				end++;
 			}
-			char word_to_insert[begin - end + 2];
-			word_to_insert[begin - end + 1] ='\0';
-			strncpy(word_to_insert, begin, begin-end);
-			if(word_to_insert != NULL){
+			char word_to_insert[end - begin + 2];
+			word_to_insert[end - begin + 1] ='\0';
+			strncpy(word_to_insert, begin, end - begin +1);
 			for(p = word_to_insert; *p; p++) *p = tolower(*p);
 			add_word(word_to_insert);
-			begin = end; 
-			}
+			begin = ++end; 
+			
 		}
 	}
 	return;
@@ -180,9 +192,8 @@ void printResult(){
 void print_file(Node* vertex, FILE *f){
 	int i;
 	if(!vertex) return;
-	for(i = 0; i<26; i++) print_trie(vertex->next[i]);
-	if (vertex->is_word
-		) fprintf(f,"%s  %d  %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+	if (vertex->is_word) fprintf(f,"%s  %d  %d\n",vertex->word, vertex->exact_num, vertex->super_num);
+	for(i = 0; i<26; i++) print_file(vertex->next[i], f);
 	return;
 }
 
@@ -211,6 +222,7 @@ int main(int argc, char** argv){
 			return 0;
 		} 
 		readDict(dict_file);
+
 		readData(data_file);
 		printResult();
 
@@ -222,17 +234,3 @@ int main(int argc, char** argv){
 	return 0;
 }
 
-int mains(){
-	head = malloc(sizeof(Node));
-	node_initialize(head, '.');
-	int i;
-
-
-
-	print_trie(head);
-	for(i=0; i<26; i++) free_trie(head->next[i]);
-	reset_head();
-	free(head);
-
-	return 0;
-}
