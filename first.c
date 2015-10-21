@@ -1,6 +1,5 @@
 #include "first.h"
-//TODO Make sure all strings given are fucking lowercase
-
+//TODO seperate Trie code from 
 Node* head;
 
 /*node and trie functions */
@@ -93,13 +92,10 @@ void free_trie(Node* vertex){
 	return;
 }
 
-/*end of node and trie functions
-  Must be given a lowercase string*/
 
 void matchStr(char* str){
 	int index;
 	Node* vertex = head;
-
 	if(vertex == NULL  || str == NULL || *str =='\0') return;
 
 	while(*str != '\0'){
@@ -114,9 +110,12 @@ void matchStr(char* str){
 	return;
 }
 
+
+/*end of node and trie functions*/
+
 void readData(FILE *data_file){
-	char string_block[500];
-	char *begin, *end;
+	char string_block[1024]; // Max buffersize 1 kilobyte
+	char *begin, *end, *p;
 	while(fscanf(data_file,"%s", string_block) != EOF){
 		/*after the last word is returned the begin index will be placed at the end '\0'*/
 		begin = end = string_block;
@@ -126,6 +125,7 @@ void readData(FILE *data_file){
 			}
 			char word_to_check[begin - end + 2];
 			word_to_check[begin - end + 1] ='\0';
+			for(p = word_to_check; *p; p++) *p = tolower(*p);
 			strncpy(word_to_check, begin, begin-end);
 			matchStr(word_to_check);
 			begin = end; 
@@ -135,20 +135,26 @@ void readData(FILE *data_file){
 }
 
 void readDict(FILE *dict_file){
-	char string_block[500];
-	char *begin, *end;
+	char string_block[1024]; // Max buffersize 1 kilobyte
+	char *begin, *end, *p;
 	while(fscanf(dict_file,"%s", string_block) != EOF){
 		/*after the last word is returned the begin index will be placed at the end '\0'*/
-		begin = end = string_block;
+		begin = string_block;
+
 		while(*begin != '\0'){
-			while(isalpha(*(end+1))){
+			while(!isalpha(*begin) && *begin != '\0') begin++;
+			end = begin;
+			while(isalpha(*(end+1)) && *end != '\0'){
 				end++;
 			}
 			char word_to_insert[begin - end + 2];
 			word_to_insert[begin - end + 1] ='\0';
 			strncpy(word_to_insert, begin, begin-end);
+			if(word_to_insert != NULL){
+			for(p = word_to_insert; *p; p++) *p = tolower(*p);
 			add_word(word_to_insert);
 			begin = end; 
+			}
 		}
 	}
 	return;
@@ -181,11 +187,14 @@ void print_file(Node* vertex, FILE *f){
 }
 
 
-int mains(int argc, char** argv){
+int main(int argc, char** argv){
 	FILE *input, *dict_file, *data_file;
-	char dict_name[500];
-	char data_name[500];
+	char dict_name[100];
+	char data_name[100];
 	int i;
+
+	head = malloc(sizeof(Node));
+	node_initialize(head, '.');
 
 	input = fopen(argv[1], "r");
 	if(input == NULL){
@@ -205,29 +214,25 @@ int mains(int argc, char** argv){
 		readData(data_file);
 		printResult();
 
-		//free's head's children recursively and reset hea
+		//free's head's children recursively and reset head
 		for(i=0; i<26; i++) free_trie(head->next[i]);
 		reset_head();
 	}
+	free (head);
 	return 0;
 }
 
-int main(){
+int mains(){
 	head = malloc(sizeof(Node));
 	node_initialize(head, '.');
-
 	int i;
-	add_word("bacon");
-	add_word("apple");
-	add_word("axe");
 
-	matchStr("axe");
-	matchStr("axel");
-	matchStr("axe");
+
 
 	print_trie(head);
 	for(i=0; i<26; i++) free_trie(head->next[i]);
 	reset_head();
+	free(head);
 
 	return 0;
 }
