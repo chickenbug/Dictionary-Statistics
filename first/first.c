@@ -210,7 +210,14 @@ int main(int argc, char** argv){
 		return 0;
 	} 
 
-	while(fscanf(input, "%s %s\n", dict_name, data_name) != EOF){
+	while(1){
+		if(fscanf(input, "%s %s\n", dict_name, data_name) != 2){
+			if(feof(input)){
+				free(head);
+			}
+			else printf("invalid input\n");
+			return 0;
+		}
 		head = malloc(sizeof(Node));
 		node_initialize(head, '.');
 
